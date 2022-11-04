@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+	<head>
+		<title>Example Map</title>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+		<link rel="stylesheet" href="map.css">
+		<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+		<script type="text/javascript" src="Layers/points.js"></script>
+		<script type="text/javascript" src="Layers/zones.js"></script>
+		<script type="text/javascript" src="Layers/parks.js"></script>
+		<script type="text/javascript" src="Layers/libraries.js"></script>
+		<script src="geolet.js"></script><!-- include geolet.js after leaflet.js -->
+</head>
+	<body>
+		<div id="map" style="position:absolute;top:0;right:0;bottom:0;left:0"></div>
+		<script>
+			var startLoc = [39.7530, -105.0010]
+
+			var map = L.map('map').setView(startLoc, 14);
+
+	    var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+	        attribution: 'OpenStreetMap'
+	    });
+	    map.addLayer(osm);
+
+      var imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'ESRI World Imagery'
+      })
+
+      var stamen = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}{r}.png', {
+        attribution: 'Stamen Toner'
+      })
+
+      // function onEachFeature(feature, layer) {
+      //     // does this feature have a property named popupContent?
+      //     if (feature.properties && feature.properties.popupContent) {
+      //         layer.bindPopup(feature.properties.popupContent);
+      //     }
+      // }
+
+			var libIcon = L.icon({
+			    iconUrl: 'book-stack.svg',
+			    // shadowUrl: 'leaf-shadow.png',
+
+			    iconSize:     [30, 30], // size of the icon
+			    // shadowSize:   [50, 64], // size of the shadow
+			    iconAnchor:   [15,15], // point of the icon which will correspond to marker's location
+			    // shadowAnchor: [4, 62],  // the same for the shadow
+			    // popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+			});
+
+			function zone_style(feature) {
+			    return {
+			        fillColor: feature.properties.color,
+			        weight: 5,
+			        opacity: 1,
+			        color: feature.properties.color,
+			        dashArray: '2',
+			        fillOpacity: 0.10
+			    };
+			};
+
+			function onEachFeaturePoint(feature, layer) {
+			    // does this feature have a property named popupContent?
+			    if (feature.properties && feature.properties.POI) {
+			        layer.bindPopup(feature.properties.POI);
+			    }
+			}
+
+			function onEachFeatureZone(feature, layer) {
+					// does this feature have a property named popupContent?
+					if (feature.properties && feature.properties.Zone) {
+							layer.bindPopup(feature.properties.Zone);
+					}
+			}
+
+			function onEachFeatureLib(feature, layer) {
+					// does this feature have a property named popupContent?
+					if (feature.properties && feature.properties.Name) {
+							layer.bindPopup(feature.properties.Name);
+					}
+			}
+
+			var zoneLayer = L.geoJSON(zones, {
+				style: zone_style,
+				onEachFeature: onEachFeatureZone
+			}).addTo(map);
+
+			var park_style = {
+				fillColor: 'green',
+				weight: 0.5,
+				opacity: 1,
+				color: 'white',
+				dashArray: '1',
+				fillOpacity: 0.5
+			};
+
+			parkLayer = L.geoJSON(parks, {
+        style: park_style
+      }).addTo(map);
+
+      function point_style(feature) {
+			    return {
+            radius: 6,
+  			    fillColor: feature.properties.color,
+  			    color: "#000",
+  			    weight: 1,
+  			    opacity: 1,
+  			    fillOpacity: 0.75
+			    };
+			};
+
+			var pointLayer = L.geoJSON(points, {
+          style: point_style,
+					onEachFeature: onEachFeaturePoint,
+          pointToLayer: function (feature, latlng) {
+              return L.circleMarker(latlng);
+          }
+      }).addTo(map);
+
+			var libLayer = L.geoJSON(libs, {
+					onEachFeature: onEachFeatureLib,
+          pointToLayer: function (feature, latlng) {
+              return L.marker(latlng, {icon: libIcon});
+          }
+      }).addTo(map);
+
+      var basemaps = {
+        "OSM" : osm,
+        'Imagery' : imagery,
+        'Simple' : stamen
+      }
+
+			// var pts = L.layerGroup([pointLayer, zoneLayerm parksLayer])
+      var overlays = {
+          "Points": pointLayer,
+          "Zones" : zoneLayer,
+          "Parks" : parkLayer,
+					"Libraries" : libLayer
+      };
+// <span style='color: #666666'>Parks</span>
+      var layerControl = L.control.layers(basemaps, overlays).addTo(map);
+      // L.control.layers(null, layers).addTo(map);
+			L.geolet({
+				position: 'bottomleft'
+			}).addTo(map);
+
+		</script>
+	</body>
+</html>
